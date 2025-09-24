@@ -1,0 +1,38 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors/IDE
+.vscode/
+.idea/
+
+# Build/coverage
+dist/
+build/
+coverage/
+.nyc_output/
+
+# Project outputs (generated)
+output/
+temp/
+data/*.json
+
+# Playwright artifacts
+playwright-report/
+test-results/
+traces/
+
+# Environment
+.env
+.env.*
+
+# Vercel local
+.vercel/
+
