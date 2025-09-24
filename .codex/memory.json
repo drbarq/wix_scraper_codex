@@ -36,9 +36,13 @@
       "leaflet": "1.9.4",
       "externalScript": "/assets/gps/map-init.js",
       "markerEvery": 100,
-      "markerLabels": "always",
+      "markerLabels": "click",
       "sources": ["*.gpx", "*.kml", "*.geojson"],
       "ignored": ["*.csv"]
+    },
+    "sanitizer": {
+      "removes": ["wix-thunderbolt", "parastorage", "requirejs", "sentry", "firebase", "wix chat", "preload/prefetch"],
+      "preserves": ["leaflet", "gps map-init.js"]
     }
   },
   "config": {
@@ -62,19 +66,22 @@
     "process": "npm run process",
     "gps": "npm run gps",
     "preview": "npm run preview",
-    "archive": "npm run archive"
+    "archive": "npm run archive",
+    "sanitize": "npm run sanitize",
+    "export": "npm run export"
   },
   "decisions": [
     "Single-page responsive output per URL (merge desktop+mobile).",
     "Preserve URL structure and rewrite internal links to local root-relative paths.",
     "Crawler handles sitemap index + dynamic discovery on homepage pagination.",
     "GPS map replaces original embed in-place; uses external init script to avoid inline parsing issues.",
+    "KML LineStrings without timestamps do not produce markers (GPX markers preferred).",
+    "Sanitizer strips Wix runtime and telemetry from static HTML, preserving Leaflet and GPS init only.",
     "Markers show date labels sampled every N points (default 100)."
   ],
   "knownIssues": [
     "Some Wix JS warnings/errors are expected in a static snapshot but do not block rendering.",
     "CSV GPS files are currently ignored; add support if needed (need column names)."
   ],
-  "updatedAt": "2025-09-24T00:00:00Z"
+  "updatedAt": "2025-09-24T00:30:00Z"
 }
-

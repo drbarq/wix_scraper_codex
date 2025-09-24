@@ -20,6 +20,8 @@
 - GPS: `npm run gps` → builds `/current-location/` map.
 - Preview: `npm run preview` → http://localhost:3000.
 - Full pipeline: `npm run archive` (discover→capture→assets→process→gps).
+- Sanitize: `npm run sanitize` → strips Wix runtime/telemetry scripts and preloads from built HTML.
+- Export: `npm run export` → copies `output/` to `./qr646` for deployment elsewhere.
 
 ## Coding Style & Naming Conventions
 - Node.js (v18+), CommonJS modules, 2‑space indent, semicolons.
@@ -40,3 +42,4 @@
 - Do not commit secrets. `output/`, `temp/`, and `data/*.json` are git‑ignored by default.
 - Tune behavior via `config/settings.json` (e.g., `parallel`, `captureParallel`, `gps.markerEvery`).
 - When adding networked features, keep all assets local for static hosting.
+- Sanitizer removes third-party runtime and telemetry by default from `output/`. Preserve only what’s required (Leaflet, GPS init).

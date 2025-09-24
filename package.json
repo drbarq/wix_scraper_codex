@@ -15,7 +15,8 @@
     "gps": "node src/gps.js",
     "preview": "node src/server.js",
     "deploy": "node src/deploy.js",
-    "sanitize": "node src/sanitize-output.js"
+    "sanitize": "node src/sanitize-output.js",
+    "export": "node src/export.js --dest qr646"
   },
   "dependencies": {
     "chalk": "^4.1.2",
