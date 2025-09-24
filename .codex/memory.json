@@ -1,0 +1,80 @@
+{
+  "project": {
+    "name": "Wix Archiver for qr646.com",
+    "goal": "Pixel-perfect static archive with a single responsive site for both mobile and desktop.",
+    "stack": ["Node 18+", "Playwright", "Cheerio", "Express", "Vercel (static)"]
+  },
+  "state": {
+    "modules": [
+      "src/crawler.js",
+      "src/scraper.js",
+      "src/assetDownloader.js",
+      "src/rewriter.js",
+      "src/responsiveHandler.js",
+      "src/server.js",
+      "src/deploy.js",
+      "src/gps.js"
+    ],
+    "crawler": {
+      "sitemapRecursion": true,
+      "dynamicDiscovery": ["/", "/home", "/home/page/2", "/home/page/3"],
+      "internalHostVariants": ["qr646.com", "www.qr646.com"],
+      "homePaginationMax": 3
+    },
+    "capture": {
+      "desktopMobile": true,
+      "captureParallel": 2
+    },
+    "rewriter": {
+      "assetRewrite": true,
+      "internalLinks": "root-relative with trailing slash",
+      "removeTracking": true,
+      "singleResponsive": true
+    },
+    "gps": {
+      "injectInto": "#comp-j8dunfe7 (fallback: wix-iframe parent)",
+      "leaflet": "1.9.4",
+      "externalScript": "/assets/gps/map-init.js",
+      "markerEvery": 100,
+      "markerLabels": "always",
+      "sources": ["*.gpx", "*.kml", "*.geojson"],
+      "ignored": ["*.csv"]
+    }
+  },
+  "config": {
+    "file": "config/settings.json",
+    "keys": {
+      "siteUrl": "https://www.qr646.com",
+      "parallel": "crawl/assets concurrency",
+      "captureParallel": "page capture concurrency",
+      "timeout": 30000,
+      "singleResponsive": true,
+      "removeTracking": true,
+      "downloadHighRes": true,
+      "homePaginationMax": 3,
+      "gps": { "markerEvery": 100, "markerLabels": "always" }
+    }
+  },
+  "commands": {
+    "discover": "npm run discover",
+    "capture": "npm run capture",
+    "assets": "npm run assets",
+    "process": "npm run process",
+    "gps": "npm run gps",
+    "preview": "npm run preview",
+    "archive": "npm run archive"
+  },
+  "decisions": [
+    "Single-page responsive output per URL (merge desktop+mobile).",
+    "Preserve URL structure and rewrite internal links to local root-relative paths.",
+    "Crawler handles sitemap index + dynamic discovery on homepage pagination.",
+    "GPS map replaces original embed in-place; uses external init script to avoid inline parsing issues.",
+    "Markers show date labels sampled every N points (default 100)."
+  ],
+  "knownIssues": [
+    "Some Wix JS warnings/errors are expected in a static snapshot but do not block rendering.",
+    "CSV GPS files are currently ignored; add support if needed (need column names)."
+  ],
+  "updatedAt": "2025-09-24T00:00:00Z"
+}
+

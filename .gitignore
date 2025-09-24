@@ -23,6 +23,7 @@ coverage/
 output/
 temp/
 data/*.json
+gps/
 
 # Playwright artifacts
 playwright-report/
@@ -35,4 +36,3 @@ traces/
 
 # Vercel local
 .vercel/
-
