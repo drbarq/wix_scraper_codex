@@ -14,7 +14,8 @@
     "process": "node src/rewriter.js",
     "gps": "node src/gps.js",
     "preview": "node src/server.js",
-    "deploy": "node src/deploy.js"
+    "deploy": "node src/deploy.js",
+    "sanitize": "node src/sanitize-output.js"
   },
   "dependencies": {
     "chalk": "^4.1.2",
