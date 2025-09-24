@@ -12,6 +12,6 @@
   "captureParallel": 10,
   "timeout": 30000,
   "singleResponsive": true,
-  "homePaginationMax": 3
-  ,"gps": { "markerEvery": 100, "markerLabels": "always" }
+  "homePaginationMax": 3,
+  "gps": { "markerEvery": 100, "markerLabels": "click" }
 }

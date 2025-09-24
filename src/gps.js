@@ -163,14 +163,19 @@ async function loadKML(file) {
         }).filter((xy) => Number.isFinite(xy[0]) && Number.isFinite(xy[1]));
         if (coords.length > 1) {
           lineFeatures.push({ ...coordsToLineString(coords), properties: { __kind: 'track' } });
-          coords.forEach((c, idx) => {
-            if (idx % markerEvery === 0) {
-              const iso = whenArr[idx] || null;
-              const formatted = iso ? formatISODate(iso) : null;
-              const label = formatted || (iso || undefined) || `Pt ${idx}`;
-              markerFeatures.push({ type: 'Feature', properties: { __kind: 'marker', seq: idx, time: iso || undefined, label }, geometry: { type: 'Point', coordinates: c } });
-            }
-          });
+          // Only add KML markers if we have corresponding timestamps
+          if (whenArr && whenArr.length) {
+            coords.forEach((c, idx) => {
+              if (idx % markerEvery === 0) {
+                const iso = whenArr[idx] || null;
+                if (iso) {
+                  const formatted = formatISODate(iso);
+                  const label = formatted || iso;
+                  markerFeatures.push({ type: 'Feature', properties: { __kind: 'marker', seq: idx, time: iso, label }, geometry: { type: 'Point', coordinates: c } });
+                }
+              }
+            });
+          }
         }
       } else if (Array.isArray(line)) {
         const coords = line.map((c) => {
@@ -179,14 +184,19 @@ async function loadKML(file) {
         }).filter((xy) => Number.isFinite(xy[0]) && Number.isFinite(xy[1]));
         if (coords.length > 1) {
           lineFeatures.push({ ...coordsToLineString(coords), properties: { __kind: 'track' } });
-          coords.forEach((c, idx) => {
-            if (idx % markerEvery === 0) {
-              const iso = whenArr[idx] || null;
-              const formatted = iso ? formatISODate(iso) : null;
-              const label = formatted || (iso || undefined) || `Pt ${idx}`;
-              markerFeatures.push({ type: 'Feature', properties: { __kind: 'marker', seq: idx, time: iso || undefined, label }, geometry: { type: 'Point', coordinates: c } });
-            }
-          });
+          // Only add KML markers if we have corresponding timestamps
+          if (whenArr && whenArr.length) {
+            coords.forEach((c, idx) => {
+              if (idx % markerEvery === 0) {
+                const iso = whenArr[idx] || null;
+                if (iso) {
+                  const formatted = formatISODate(iso);
+                  const label = formatted || iso;
+                  markerFeatures.push({ type: 'Feature', properties: { __kind: 'marker', seq: idx, time: iso, label }, geometry: { type: 'Point', coordinates: c } });
+                }
+              }
+            });
+          }
         }
       }
     }
@@ -281,6 +291,15 @@ async function injectMapIntoExisting(geojsonRelPath) {
   // Write external map init script to avoid inline quoting issues
   const initSource = `
 (function(){
+  var MARKER_LABEL_MODE = '${markerLabels}';
+  function fmtFriendly(iso){
+    try{
+      var d = new Date(iso);
+      var local = new Intl.DateTimeFormat(undefined, { year:'numeric', month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false, timeZoneName:'short' }).format(d);
+      var utc = new Intl.DateTimeFormat('en-GB', { year:'numeric', month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'UTC', timeZoneName:'short' }).format(d);
+      return { local: local, utc: utc };
+    }catch(e){ return { local: String(iso), utc: '' }; }
+  }
   function init(){
     if (!window.L || !document.getElementById('qr-map')) { return setTimeout(init, 50); }
     try{
@@ -295,14 +314,38 @@ async function injectMapIntoExisting(geojsonRelPath) {
           filter: function(f){ return f.properties && f.properties.__kind === 'marker'; },
           pointToLayer: function(feature, latlng){ return L.circleMarker(latlng, { radius:6, color:'#2c3e50', weight:1, fillColor:'#3498db', fillOpacity:0.95 }); },
           onEachFeature: function(feature, layer){
-            var label = '';
-            if (feature && feature.properties) { label = feature.properties.label || feature.properties.time || ''; }
-            try { console.log('GPS marker:', { time: feature && feature.properties && feature.properties.time, label: feature && feature.properties && feature.properties.label, seq: feature && feature.properties && feature.properties.seq }); } catch(e) {}
-            if (label) {
-              try { layer.bindTooltip(label, { permanent: ${markerLabels === 'always' ? 'true' : 'false'}, direction: 'top', offset: [0, -8], opacity: 0.95 }); } catch(e) {}
-              try { layer.bindPopup('<div style="font-family:system-ui,sans-serif;font-size:12px;"><strong>' + String(label) + '</strong></div>', { autoPan: true, closeButton: true }); } catch(e) {}
-              try { layer.on('click', function(ev){ ev.originalEvent && ev.originalEvent.stopPropagation && ev.originalEvent.stopPropagation(); try { console.log('GPS marker click:', { time: feature && feature.properties && feature.properties.time, label: feature && feature.properties && feature.properties.label, seq: feature && feature.properties && feature.properties.seq }); } catch(e) {} try { layer.openPopup(); } catch(e) {} }); } catch(e) {}
-            }
+            var props = (feature && feature.properties) || {};
+            var label = props.time || props.label || '';
+            
+            // Bind tooltip only for 'always' or 'hover' modes
+            try {
+              if (label && MARKER_LABEL_MODE === 'always') {
+                layer.bindTooltip(label, { permanent: true, direction: 'top', offset: [0, -8], opacity: 0.95 });
+              } else if (label && MARKER_LABEL_MODE === 'hover') {
+                layer.bindTooltip(label, { permanent: false, direction: 'top', offset: [0, -8], opacity: 0.95 });
+              }
+            } catch(e) {}
+            // Always attach a popup; prefer timestamp when available
+            try {
+              var html;
+              if (props.time){
+                var t = fmtFriendly(props.time);
+                html = '<div style=\"font-family:system-ui,sans-serif;font-size:12px;line-height:1.35;\">'
+                    + '<div><strong>' + t.local + '</strong></div>'
+                    + (props.seq != null ? '<div style=\"opacity:.6\">Point #' + props.seq + '</div>' : '')
+                    + '</div>';
+              } else {
+                html = '<div style=\"font-family:system-ui,sans-serif;font-size:12px;\"><strong>' + String(label) + '</strong></div>';
+              }
+              layer.bindPopup(html, { autoPan: true, closeButton: true });
+            } catch(e) {}
+            try {
+              layer.on('click', function(ev){
+                ev.originalEvent && ev.originalEvent.stopPropagation && ev.originalEvent.stopPropagation();
+                
+                try { layer.openPopup(); } catch(e) {}
+              });
+            } catch(e) {}
           }
         }).addTo(map);
         try{ var b1 = tracks.getBounds(); if (b1.isValid()) map.fitBounds(b1.pad(0.1)); else map.setView([0,0],2);}catch(e){ map.setView([0,0],2); }
